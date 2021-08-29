@@ -2,7 +2,7 @@
 .PHONY: example
 example:
 	@mkdir -p output
-	@cd example/simple;go build -gcflags='-l -N' -o ../output/example
+	@cd example/simple;go build -gcflags='-l -N' -o ../../output/example
 
 .PHONY: clean
 clean:
