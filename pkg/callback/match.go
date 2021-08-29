@@ -34,7 +34,7 @@ func (vm MatchByReflectValue) Match(matches map[string]Match) bool {
 			return false
 		}
 
-		v = reflect.Indirect(reflect.Value(v))
+		v = reflect.Indirect(v)
 		if !match(v.Interface()) {
 			return false
 		}

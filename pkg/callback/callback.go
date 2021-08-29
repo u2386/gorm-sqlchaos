@@ -32,10 +32,10 @@ var (
 	DEBUG          = os.Getenv("SQLCHAOS_DEBUG") != ""
 	SQLCHAOS_DEBUG = func(format string, args ...interface{}) {
 		if DEBUG {
-			fmt.Fprintf(os.Stdout, format+"\n", args...)
+			fmt.Fprintf(os.Stdout, "SQLCHAOS:"+format+"\n", args...)
 		}
 	}
-	SQLCHAOS_ERROR = func(format string, args ...interface{}) { fmt.Fprintf(os.Stderr, format+"\n", args...) }
+	SQLCHAOS_ERROR = func(format string, args ...interface{}) { fmt.Fprintf(os.Stderr, "SQLCHAOS:"+format+"\n", args...) }
 )
 
 func (c *Callback) BeforeCreate() func(*gorm.DB) {
@@ -55,10 +55,10 @@ func (c *Callback) BeforeCreate() func(*gorm.DB) {
 		if rule == nil {
 			return
 		}
-		SQLCHAOS_DEBUG("SQLCHAOS:get chaos rule:%#v", rule)
+		SQLCHAOS_DEBUG("get chaos rule:%#v", rule)
 
 		if ApplyRule(rule, stmt) {
-			SQLCHAOS_ERROR("SQLCHAOS:records have been modified")
+			SQLCHAOS_ERROR("records have been modified")
 		}
 	}
 }
@@ -80,10 +80,10 @@ func (c *Callback) BeforeUpdate() func(*gorm.DB) {
 		if rule == nil {
 			return
 		}
-		SQLCHAOS_DEBUG("SQLCHAOS:get chaos rule:%#v", rule)
+		SQLCHAOS_DEBUG("get chaos rule:%#v", rule)
 
 		if ApplyRule(rule, stmt) {
-			SQLCHAOS_ERROR("SQLCHAOS:records have been modified")
+			SQLCHAOS_ERROR("records have been modified")
 		}
 	}
 }
@@ -142,10 +142,11 @@ func ApplyValuesIfMatch(stmt *gorm.Statement, matcher Matcher, applier Applier) 
 			}
 		}
 	} else {
-		switch stmt.ReflectValue.Kind() {
+		dest := reflect.Indirect(reflect.ValueOf(stmt.Dest))
+		switch dest.Kind() {
 		case reflect.Slice, reflect.Array:
-			for i := 0; i < stmt.ReflectValue.Len(); i++ {
-				one := stmt.ReflectValue.Index(i)
+			for i := 0; i < dest.Len(); i++ {
+				one := dest.Index(i)
 				vs := make(map[string]reflect.Value)
 				for name, field := range stmt.Schema.FieldsByName {
 					v := one.FieldByName(name)
@@ -161,7 +162,7 @@ func ApplyValuesIfMatch(stmt *gorm.Statement, matcher Matcher, applier Applier) 
 		case reflect.Struct:
 			vs := make(map[string]reflect.Value)
 			for name, field := range stmt.Schema.FieldsByName {
-				v := stmt.ReflectValue.FieldByName(name)
+				v := dest.FieldByName(name)
 				if !v.IsValid() || (v.Kind() == reflect.Ptr && v.IsNil()) {
 					continue
 				}
