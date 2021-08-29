@@ -46,6 +46,10 @@ func and(ms ...Match) Match {
 	}
 }
 
+func never() Match {
+	return func(actual interface{}) bool { return false }
+}
+
 func eq(expect string) Match {
 	return func(actual interface{}) bool {
 		actual = reflect.Indirect(reflect.ValueOf(actual)).Interface()
