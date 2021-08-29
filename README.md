@@ -71,7 +71,7 @@ export DBNAME=dummy;export TABLE=users;
 After enabled, every record you created using gorm which matches `age>=1` and `age<50` condition, 
 the `balance` will be set to `1024` and `age` will be `40` before it inserted into database.
 
-To disable table chaos rule,
+To disable the table chaos rule,
 ```bash
 > curl -XDELETE "http://127.0.0.1:8081/$DBNAME/$TABLE" 
 ```
@@ -81,7 +81,7 @@ For more practical examples, please check `./example`.
 ## Limits
 
 * gorm `Save` may not envoke hooks, so SQLChaos only be called in `Create`, `Update`, `Updates`;
-* `when` condition supported `AND` only, and operators like `= < <= > >=` are supported;
+* `when` condition supports `AND` only, and operators like `= < <= > >=` are supported;
 * Only read values from gorm Statement.Dest which is basically same as
     the argument you pass to `Create` `Update` `Updates` functions.
     **Ensure values which `when` needed are present where you call on `Create`, `Update`, `Updates`.**
