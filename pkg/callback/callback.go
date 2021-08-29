@@ -138,7 +138,7 @@ func ApplyValuesIfMatch(stmt *gorm.Statement, matcher Matcher, applier Applier) 
 		for _, v := range vs {
 			Canonical(stmt.Schema, v)
 			if matcher.Match(MatchByInterface(v)) {
-				applied = applied || applier.Apply(ApplyByInterface(v))
+				applied = applier.Apply(ApplyByInterface(v)) || applied
 			}
 		}
 	} else {
@@ -155,7 +155,7 @@ func ApplyValuesIfMatch(stmt *gorm.Statement, matcher Matcher, applier Applier) 
 					vs[field.DBName] = v
 				}
 				if matcher.Match(MatchByReflectValue(vs)) {
-					applied = applied || applier.Apply(ApplyByReflectValue(vs))
+					applied = applier.Apply(ApplyByReflectValue(vs)) || applied
 				}
 			}
 		case reflect.Struct:
