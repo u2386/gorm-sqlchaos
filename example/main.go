@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	sqlchaos "github.com/u2386/gorm-sqlchaos"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -26,7 +27,9 @@ type (
 )
 
 func main() {
-	db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{}, &sqlchaos.Config{
+		DBName: "dummy",
+	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "connect db failed:%v", err)
 		return
