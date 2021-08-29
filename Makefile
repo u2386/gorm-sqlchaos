@@ -2,14 +2,12 @@
 .PHONY: example
 example:
 	@mkdir -p output
-	@cd example;go build -gcflags='-l -N' -o ../output/example
+	@cd example/simple;go build -gcflags='-l -N' -o ../output/example
 
 .PHONY: clean
 clean:
-	@rm -rf output \
-		coverage
+	@rm -rf output
 
 .PHONY: test
 test:
-	@mkdir -p coverage
-	@go test -gcflags='-l -N' -v -race -cover ./...
+	@go test -gcflags='all=-l -N' -v -race -cover ./...
