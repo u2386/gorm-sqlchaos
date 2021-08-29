@@ -26,9 +26,18 @@ type (
 	}
 )
 
+func ReadRule(_ context.Context, dbname, table string) ([]byte, error) {
+	return []byte(`{
+		"dml": "UPDATE",
+		"when": "name=rick",
+		"then": "age=25"
+	}`), nil
+}
+
 func main() {
 	db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{}, &sqlchaos.Config{
-		DBName: "dummy",
+		DBName:     "dummy",
+		RuleReader: ReadRule,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "connect db failed:%v", err)
@@ -37,31 +46,36 @@ func main() {
 
 	ctx := context.Background()
 
-	email := "no-reply@gmail.com"
-	now := time.Now()
-	user := &User{
-		ID:      1,
-		Name:    "rick",
-		Age:     50,
-		Balance: 1024,
-		Email:   &email,
-		CreatedAt: &now,
-	}
-	if err := db.WithContext(ctx).Save(user).Error; err != nil {
-		fmt.Fprintf(os.Stderr, "save record failed:%v\n", err)
-		return
-	}
+	user := &User{}
+	err = db.WithContext(ctx).Where("name = ?", "rick").First(user).Error
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			fmt.Fprintf(os.Stderr, "select record failed:%v\n", err)
+			return
+		}
 
-	if err := db.WithContext(ctx).Where("name = ?", "rick").First(user).Error; err != nil {
-		fmt.Fprintf(os.Stderr, "select record failed:%v\n", err)
-		return
+		email := "no-reply@gmail.com"
+		user = &User{
+			ID: 1,
+			Name: "rick",
+			Age: 50,
+			Email: &email,
+			Balance: 1024,
+		}
+		if err = db.WithContext(ctx).Save(user).Error; err != nil {
+			fmt.Fprintf(os.Stderr, "save record failed:%v\n", err)
+			return
+		}
 	}
 
 	data, _ := json.Marshal(user)
 	fmt.Println("user:", string(data))
 
 	user.Balance = 2048
-	if err := db.WithContext(ctx).Updates(user).Error; err != nil {
+	if err := db.Debug().WithContext(ctx).Model(User{}).
+		Where("id = ?", user.ID).
+		Updates(user).
+		Error; err != nil {
 		fmt.Fprintf(os.Stderr, "select record failed:%v\n", err)
 		return
 	}

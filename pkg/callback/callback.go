@@ -13,17 +13,18 @@ import (
 
 type (
 	Rules interface {
-		Get(ctx context.Context, key string) (*ChaosRule, error)
+		Get(ctx context.Context, dbname, table string) (*ChaosRule, error)
 	}
 
 	ChaosRule struct {
-		DML  string
-		When string
-		Then string
+		DML  string `json:"dml"`
+		When string `json:"when"`
+		Then string `json:"then"`
 	}
 
 	Callback struct {
-		Rules Rules
+		DBName string
+		Rules  Rules
 	}
 )
 
@@ -34,7 +35,7 @@ var (
 			fmt.Fprintf(os.Stdout, format+"\n", args...)
 		}
 	}
-	SQLCHAOS_ERROR = func(format string, args ...interface{}) { fmt.Fprintf(os.Stderr, format, args...) }
+	SQLCHAOS_ERROR = func(format string, args ...interface{}) { fmt.Fprintf(os.Stderr, format+"\n", args...) }
 )
 
 func (c *Callback) BeforeCreate() func(*gorm.DB) {
@@ -45,8 +46,8 @@ func (c *Callback) BeforeCreate() func(*gorm.DB) {
 			return
 		}
 
-		key := db.Statement.Table
-		rule, err := c.GetTableRule(context.Background(), key, "CREATE")
+		table := db.Statement.Table
+		rule, err := c.GetTableRule(context.Background(), table, "CREATE")
 		if err != nil {
 			SQLCHAOS_ERROR("read rule failed:%+v", err)
 			return
@@ -70,8 +71,8 @@ func (c *Callback) BeforeUpdate() func(*gorm.DB) {
 			return
 		}
 
-		key := db.Statement.Table
-		rule, err := c.GetTableRule(context.Background(), key, "UPDATE")
+		table := db.Statement.Table
+		rule, err := c.GetTableRule(context.Background(), table, "UPDATE")
 		if err != nil {
 			SQLCHAOS_ERROR("read rule failed:%+v", err)
 			return
@@ -88,22 +89,22 @@ func (c *Callback) BeforeUpdate() func(*gorm.DB) {
 }
 
 func ApplyRule(rule *ChaosRule, stmt *gorm.Statement) (applied bool) {
-	matcher, err := ParseWhereStatement(rule.When)
+	matcher, err := ParseWhenStatement(rule.When)
 	if err != nil {
-		SQLCHAOS_ERROR("where statement invalid:%+v", err)
+		SQLCHAOS_ERROR("when statement invalid:%+v", err)
 		return
 	}
 
-	applier, err := ParseSetStatement(rule.Then)
+	applier, err := ParseThenStatement(rule.Then)
 	if err != nil {
-		SQLCHAOS_ERROR("set statement invalid:%+v", err)
+		SQLCHAOS_ERROR("then statement invalid:%+v", err)
 		return
 	}
 	return ApplyValuesIfMatch(stmt, matcher, applier)
 }
 
-func (c *Callback) GetTableRule(ctx context.Context, key, dml string) (rule *ChaosRule, err error) {
-	rule, err = c.Rules.Get(context.TODO(), key)
+func (c *Callback) GetTableRule(ctx context.Context, table, dml string) (rule *ChaosRule, err error) {
+	rule, err = c.Rules.Get(context.TODO(), c.DBName, table)
 	if err != nil || rule == nil {
 		return
 	}
