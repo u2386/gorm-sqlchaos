@@ -31,7 +31,7 @@ type (
 func main() {
 	db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{}, &sqlchaos.Config{
 		DBName:     "dummy",
-		RuleReader: sqlchaos.WithSimpleHTTPRuleReader(),
+		RuleProvider: sqlchaos.WithSimpleHTTPRuleProvider(),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "connect db failed:%v", err)

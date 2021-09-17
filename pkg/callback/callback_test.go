@@ -14,7 +14,7 @@ import (
 
 type ff func(context.Context, string, string) string
 
-func (f ff) Get(ctx context.Context, dbname, table string) (*ChaosRule, error) {
+func (f ff) Rule(ctx context.Context, dbname, table string) (*ChaosRule, error) {
 	f(ctx, dbname, table)
 	return nil, nil
 }
@@ -43,7 +43,7 @@ func TestGetTableRule(t *testing.T) {
 
 	c = &Callback{
 		DBName: "foo",
-		Rules: ff(func(c context.Context, s1, s2 string) string {
+		RuleProvider: ff(func(c context.Context, s1, s2 string) string {
 			assert.Equal(t, "foo", s1)
 			assert.Equal(t, table, s2)
 			return ""

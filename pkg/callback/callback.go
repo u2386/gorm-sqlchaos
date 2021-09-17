@@ -12,8 +12,8 @@ import (
 )
 
 type (
-	Rules interface {
-		Get(ctx context.Context, dbname, table string) (*ChaosRule, error)
+	RuleProvider interface {
+		Rule(ctx context.Context, dbname, table string) (*ChaosRule, error)
 	}
 
 	ChaosRule struct {
@@ -24,7 +24,7 @@ type (
 
 	Callback struct {
 		DBName string
-		Rules  Rules
+		RuleProvider  RuleProvider
 	}
 )
 
@@ -104,7 +104,7 @@ func ApplyRule(rule *ChaosRule, stmt *gorm.Statement) (applied bool) {
 }
 
 func (c *Callback) GetTableRule(ctx context.Context, table, dml string) (rule *ChaosRule, err error) {
-	rule, err = c.Rules.Get(context.TODO(), c.DBName, table)
+	rule, err = c.RuleProvider.Rule(context.TODO(), c.DBName, table)
 	if err != nil || rule == nil {
 		return
 	}

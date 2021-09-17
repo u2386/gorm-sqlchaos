@@ -26,7 +26,7 @@ type (
 	}
 )
 
-func ReadRule(_ context.Context, dbname, table string) ([]byte, error) {
+func StaticRuleProvider(_ context.Context, dbname, table string) ([]byte, error) {
 	return []byte(`{
 		"dml": "UPDATE",
 		"when": "name=rick",
@@ -37,7 +37,7 @@ func ReadRule(_ context.Context, dbname, table string) ([]byte, error) {
 func main() {
 	db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{}, &sqlchaos.Config{
 		DBName:     "dummy",
-		RuleReader: ReadRule,
+		RuleProvider: StaticRuleProvider,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "connect db failed:%v", err)

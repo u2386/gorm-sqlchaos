@@ -19,10 +19,10 @@ import (
 var _ gorm.Option = (*Config)(nil)
 
 type (
-	ReadRule func(ctx context.Context, dbname, table string) ([]byte, error)
+	RuleProvider func(ctx context.Context, dbname, table string) ([]byte, error)
 	Config   struct {
 		DBName     string
-		RuleReader ReadRule
+		RuleProvider RuleProvider
 	}
 )
 
@@ -30,7 +30,7 @@ var (
 	ErrArgumentNotSpecified = errors.New("argument not specified")
 )
 
-func (f ReadRule) Get(ctx context.Context, dbname, table string) (*callback.ChaosRule, error) {
+func (f RuleProvider) Rule(ctx context.Context, dbname, table string) (*callback.ChaosRule, error) {
 	value, err := f(ctx, dbname, table)
 	if err != nil || value == nil {
 		return nil, err
@@ -51,15 +51,15 @@ func (c *Config) AfterInitialize(db *gorm.DB) error {
 		fmt.Fprintln(os.Stderr, "SQLCHAOS:db not specified")
 		return ErrArgumentNotSpecified
 	}
-	if c.RuleReader == nil {
-		fmt.Fprintln(os.Stderr, "SQLCHAOS:rule reader not specified")
+	if c.RuleProvider == nil {
+		fmt.Fprintln(os.Stderr, "SQLCHAOS:rule provider not specified")
 		return ErrArgumentNotSpecified
 	}
 	fmt.Fprintln(os.Stderr, "SQLCHAOS:SQLChaos enabled")
 
 	callback := &callback.Callback{
 		DBName: c.DBName,
-		Rules:  c.RuleReader,
+		RuleProvider:  c.RuleProvider,
 	}
 	if err := db.Callback().Create().Before("gorm:create").Register("sqlchaos:before-create", callback.BeforeCreate()); err != nil {
 		return err
@@ -70,7 +70,7 @@ func (c *Config) AfterInitialize(db *gorm.DB) error {
 	return nil
 }
 
-func WithSimpleHTTPRuleReader() ReadRule {
+func WithSimpleHTTPRuleProvider() RuleProvider {
 	address := os.Getenv("SQLCHAOS_HTTP")
 	if address == "" {
 		fmt.Fprintln(os.Stderr, "SQLCHAOS:http address not specified")

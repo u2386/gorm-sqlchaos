@@ -37,7 +37,7 @@ Embed SQLChaos where your gorm.DB setupped.
 ```go
 db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{}, &sqlchaos.Config{
     DBName:     "dummy",
-    RuleReader: sqlchaos.WithSimpleHTTPRuleReader(),
+    RuleProvider: sqlchaos.WithSimpleHTTPRuleProvider(),
 })
 if err != nil {
     fmt.Fprintf(os.Stderr, "connect db failed:%v", err)
@@ -45,10 +45,10 @@ if err != nil {
 }
 ```
 
-SQLChaos provides a simple HTTP server for implementing `RuleReader` to enable or disable
+SQLChaos provides a simple HTTP server for implementing `RuleProvider` to enable/disable
 chaos rules at program runtime. You can implement yours and replace it as your need.
 
-SimpleHTTPRuleReader listens at `SQLCHAOS_HTTP`.
+SimpleHTTPRuleProvider listens at `SQLCHAOS_HTTP`.
 
 ```bash
 > SQLCHAOS_HTTP=127.0.0.1:8081 ./your-program
